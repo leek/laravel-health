@@ -36,7 +36,6 @@
         "symfony/process": "^5.4|^6.0|^7.0|^8.0"
     },
     "require-dev": {
-        "laravel-notification-channels/microsoft-teams": "^1.1",
         "laravel/horizon": "^5.9.10",
         "nunomaduro/collision": "^5.10|^6.2.1|^6.1|^8.0",
         "orchestra/testbench": "^9.0|^10.0|^11.0",
@@ -74,6 +73,10 @@
             "phpstan/extension-installer": true,
             "pestphp/pest-plugin": true
         }
+    },
+    "suggest": {
+        "laravel/slack-notification-channel": "Required for Slack notifications (^2.4|^3.0)",
+        "laravel-notification-channels/microsoft-teams": "Required for Microsoft Teams notifications (^1.1)"
     },
     "extra": {
         "laravel": {
