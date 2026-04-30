@@ -13,6 +13,9 @@ use Spatie\Health\Enums\Status;
 
 class CheckFailedNotification extends Notification
 {
+    /** @var array<string, array<int, Result>> */
+    protected array $resultsForNotificationByChannel = [];
+
     /** @param  array<int, Result>  $results */
     public function __construct(public array $results) {}
 
@@ -31,19 +34,38 @@ class CheckFailedNotification extends Notification
             return false;
         }
 
-        /** @var int $throttleMinutes */
-        $throttleMinutes = config('health.notifications.throttle_notifications_for_minutes');
+        $filteredResults = $this->filterResultsForNotificationChannel($channel);
+        $this->resultsForNotificationByChannel[$channel] = $filteredResults;
 
+        if (count($filteredResults) === 0) {
+            return false;
+        }
+
+        $hasCustomThrottleCheck = array_reduce($filteredResults, function (bool $acc, Result $result) {
+            return $acc || ($result->check->getThrottleConfiguration()[$result->status->value]['minutes'] ?? null) !== null;
+        }, false);
+
+        if ($hasCustomThrottleCheck) {
+            return true;
+        }
+
+        /** @var int $defaultThrottleMinutes */
+        $defaultThrottleMinutes = config('health.notifications.throttle_notifications_for_minutes');
+        $defaultCacheKey = config('health.notifications.throttle_notifications_key', 'health:latestNotificationSentAt:').$channel;
+
+        return $this->canAcquireLock($defaultCacheKey, $defaultThrottleMinutes);
+    }
+
+    public function canAcquireLock(string $cacheKey, int $throttleMinutes): bool
+    {
         if ($throttleMinutes === 0) {
             return true;
         }
 
-        $cacheKey = config('health.notifications.throttle_notifications_key', 'health:latestNotificationSentAt:').$channel;
-
         /** @var CacheManager $cache */
         $cache = app('cache');
 
-        /** @var string $timestamp */
+        /** @var string|null $timestamp */
         $timestamp = $cache->get($cacheKey);
 
         if (! $timestamp) {
@@ -61,12 +83,50 @@ class CheckFailedNotification extends Notification
         return true;
     }
 
+    /** @return array<int, Result> */
+    public function getCheckResults(string $channel): array
+    {
+        return $this->resultsForNotificationByChannel[$channel] ?? $this->results;
+    }
+
+    /** @return array<int, Result> */
+    protected function filterResultsForNotificationChannel(string $channel): array
+    {
+        return array_values(array_filter($this->results, function (Result $result) use ($channel) {
+            $throttleConfigByStatus = $result->check->getThrottleConfiguration();
+
+            if (! array_key_exists($result->status->value, $throttleConfigByStatus)) {
+                return true;
+            }
+
+            $throttleConfig = $throttleConfigByStatus[$result->status->value];
+
+            if ($throttleConfig['enabled'] === false) {
+                return false;
+            }
+
+            if ($throttleConfig['minutes'] !== null) {
+                $checkCacheKey = implode(':', [
+                    trim(config('health.notifications.throttle_notifications_key', 'health:latestNotificationSentAt'), ':'),
+                    $channel,
+                    get_class($result->check),
+                ]);
+
+                if (! $this->canAcquireLock($checkCacheKey, $throttleConfig['minutes'])) {
+                    return false;
+                }
+            }
+
+            return true;
+        }));
+    }
+
     public function toMail(): MailMessage
     {
         return (new MailMessage)
             ->from(config('health.notifications.mail.from.address', config('mail.from.address')), config('health.notifications.mail.from.name', config('mail.from.name')))
             ->subject(trans('health::notifications.check_failed_mail_subject', $this->transParameters()))
-            ->markdown('health::mail.checkFailedNotification', ['results' => $this->results]);
+            ->markdown('health::mail.checkFailedNotification', ['results' => $this->getCheckResults('mail')]);
     }
 
     public function toSlack(): SlackMessage
@@ -77,7 +137,7 @@ class CheckFailedNotification extends Notification
             ->to(config('health.notifications.slack.channel'))
             ->content(trans('health::notifications.check_failed_slack_message', $this->transParameters()));
 
-        foreach ($this->results as $result) {
+        foreach ($this->getCheckResults('slack') as $result) {
             $slackMessage->attachment(function (SlackAttachment $attachment) use ($result) {
                 $attachment
                     ->color(Status::from($result->status)->getSlackColor())
