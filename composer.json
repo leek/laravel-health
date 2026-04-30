@@ -76,7 +76,9 @@
     },
     "suggest": {
         "laravel/slack-notification-channel": "Required for Slack notifications (^2.4|^3.0)",
-        "laravel-notification-channels/microsoft-teams": "Required for Microsoft Teams notifications (^1.1)"
+        "laravel-notification-channels/microsoft-teams": "Required for Microsoft Teams notifications (^1.1)",
+        "laravel/octane": "Required to use OctaneCheck (^2.0)",
+        "typesense/typesense-php": "Optional Typesense client; TypesenseCheck only needs HTTP, so this is not strictly required"
     },
     "extra": {
         "laravel": {
