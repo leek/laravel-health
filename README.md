@@ -1,3 +1,38 @@
+# leek/laravel-health
+
+Fork of [`spatie/laravel-health`](https://github.com/spatie/laravel-health) with PRs the upstream maintainer rejected but real users want. Drop-in replacement — keeps the `Spatie\Health\*` namespace and declares `replace: spatie/laravel-health` in composer.
+
+## Install
+
+```json
+{
+    "repositories": [
+        { "type": "vcs", "url": "https://github.com/leek/laravel-health" }
+    ],
+    "require": {
+        "leek/laravel-health": "dev-main"
+    }
+}
+```
+
+```bash
+composer update leek/laravel-health
+```
+
+If your project (or another package) already requires `spatie/laravel-health`, the `replace` directive resolves to this fork — no other changes needed.
+
+## What's added on top of upstream
+
+- `HEALTH_MAIL_TO`, `HEALTH_THROTTLE_NOTIFICATIONS_FOR_MINUTES` env-driven config (PR #313, #73)
+- `Health::setTheme()` for runtime theme override (PR #22)
+- `Check::environments()` constraint (PR #121)
+- Per-check `disableNotifications()` + `throttleNotificationsFor()` (PR #234)
+- JSON output `status` + `failingChecks` summary (PR #236)
+- Microsoft Teams notification channel (PR #199)
+- `TypesenseCheck`, `OctaneCheck` (PR #69, #147)
+
+---
+
 <div align="left">
     <a href="https://spatie.be/open-source?utm_source=github&utm_medium=banner&utm_campaign=laravel-health">
       <picture>
