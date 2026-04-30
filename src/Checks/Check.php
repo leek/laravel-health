@@ -5,6 +5,7 @@ namespace Spatie\Health\Checks;
 use Cron\CronExpression;
 use DateTimeZone;
 use Illuminate\Console\Scheduling\ManagesFrequencies;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Conditionable;
@@ -33,6 +34,9 @@ abstract class Check
      */
     protected array $shouldRun = [];
 
+    /** @var string|array<int, string> */
+    protected string|array $environments = [];
+
     public function __construct() {}
 
     public static function new(): static
@@ -56,6 +60,19 @@ abstract class Check
         $this->label = $label;
 
         return $this;
+    }
+
+    /** @param  string|array<int, string>  $environments */
+    public function environments(string|array $environments): static
+    {
+        $this->environments = is_array($environments) ? $environments : func_get_args();
+
+        return $this;
+    }
+
+    public function runsInEnvironment(string $environment): bool
+    {
+        return empty($this->environments) || in_array($environment, (array) $this->environments, true);
     }
 
     public function getLabel(): string
@@ -87,6 +104,10 @@ abstract class Check
 
     public function shouldRun(): bool
     {
+        if (! $this->runsInEnvironment(App::environment())) {
+            return false;
+        }
+
         foreach ($this->shouldRun as $shouldRun) {
             $shouldRun = is_callable($shouldRun) ? $shouldRun() : $shouldRun;
 
