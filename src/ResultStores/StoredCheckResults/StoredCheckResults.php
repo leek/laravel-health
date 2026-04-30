@@ -89,10 +89,22 @@ class StoredCheckResults
         );
     }
 
+    /** @return Collection<int, StoredCheckResult> */
+    public function getFailing(): Collection
+    {
+        return $this->storedCheckResults->filter(
+            fn (StoredCheckResult $line) => ! in_array($line->status, $this->okStatuses)
+        )->values();
+    }
+
     public function toJson(): string
     {
+        $failingNames = $this->getFailing()->map(fn (StoredCheckResult $line) => $line->name)->values();
+
         return (string) json_encode([
             'finishedAt' => $this->finishedAt->getTimestamp(),
+            'status' => $this->allChecksOk() ? 'ok' : 'failing',
+            'failingChecks' => $failingNames->all(),
             'checkResults' => $this->storedCheckResults->map(fn (StoredCheckResult $line) => $line->toArray()),
         ]);
     }
