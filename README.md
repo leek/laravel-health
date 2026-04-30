@@ -4,19 +4,8 @@ Fork of [`spatie/laravel-health`](https://github.com/spatie/laravel-health) with
 
 ## Install
 
-```json
-{
-    "repositories": [
-        { "type": "vcs", "url": "https://github.com/leek/laravel-health" }
-    ],
-    "require": {
-        "leek/laravel-health": "dev-main"
-    }
-}
-```
-
 ```bash
-composer update leek/laravel-health
+composer require leek/laravel-health
 ```
 
 If your project (or another package) already requires `spatie/laravel-health`, the `replace` directive resolves to this fork — no other changes needed.
