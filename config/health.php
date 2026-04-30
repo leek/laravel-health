@@ -89,6 +89,10 @@ return [
 
             'icon' => null,
         ],
+
+        'microsoft_teams' => [
+            'webhook_url' => env('HEALTH_TEAMS_WEBHOOK_URL', ''),
+        ],
     ],
 
     /*

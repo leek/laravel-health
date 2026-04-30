@@ -8,6 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\SlackAttachment;
 use Illuminate\Notifications\Messages\SlackMessage;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\MicrosoftTeams\MicrosoftTeamsMessage;
 use Spatie\Health\Checks\Result;
 use Spatie\Health\Enums\Status;
 
@@ -147,6 +148,20 @@ class CheckFailedNotification extends Notification
         }
 
         return $slackMessage;
+    }
+
+    public function toMicrosoftTeams(): MicrosoftTeamsMessage
+    {
+        $teamsMessage = (new MicrosoftTeamsMessage)
+            ->type('error')
+            ->to(config('health.notifications.microsoft_teams.webhook_url'))
+            ->content(trans('health::notifications.check_failed_slack_message', $this->transParameters()));
+
+        foreach ($this->getCheckResults('microsoftTeams') as $result) {
+            $teamsMessage->fact($result->check->getLabel(), $result->getNotificationMessage());
+        }
+
+        return $teamsMessage;
     }
 
     /**
