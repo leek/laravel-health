@@ -1,12 +1,15 @@
 {
-    "name": "spatie/laravel-health",
-    "description": "Monitor the health of a Laravel application",
+    "name": "leek/laravel-health",
+    "description": "Monitor the health of a Laravel application (fork of spatie/laravel-health)",
     "keywords": [
         "spatie",
         "laravel",
         "laravel-health"
     ],
-    "homepage": "https://github.com/spatie/laravel-health",
+    "homepage": "https://github.com/leek/laravel-health",
+    "replace": {
+        "spatie/laravel-health": "*"
+    },
     "license": "MIT",
     "authors": [
         {
